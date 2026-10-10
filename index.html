@@ -20,6 +20,7 @@
     <button data-v="l" aria-pressed="false">Lançamentos</button>
     <button data-v="c" aria-pressed="false">Contas</button>
     <button data-v="b" aria-pressed="false">Banco</button>
+    <button data-v="pl" aria-pressed="false">Meu plano</button>
   </nav>
   <p id="aviso" class="neg" role="alert" hidden></p>
   <main id="app" class="w"></main>
@@ -400,22 +401,57 @@ function demo(){
                       :[{id:'b1',nome:'Banco principal',saldo:2000000,d:d0},{id:'b2',nome:'Conta digital',saldo:600000,d:d0}]}
 }
 
+
+/* ---------- planos (metadados autorizados pelo Supabase/RLS) ---------- */
+let MF_PLAN=null;
+const PLANOS={
+ piloto:{nome:'Piloto acompanhado',preco:0,desc:'Gratuito por 14 dias'},
+ essencial:{nome:'Mesa Financeira Essencial',preco:2990,desc:'Software e suporte básico'},
+ bpo:{nome:'BPO Essencial',preco:35000,desc:'Operação financeira conforme escopo contratado'},
+ bpo_sistema:{nome:'BPO + sistema',preco:39900,desc:'Software e BPO conforme escopo contratado'}
+};
+const planoV=()=>{
+ const p=MF_PLAN||{plano:'piloto',status:'piloto',inicio:null,fim:null,pagamento_status:'pendente'};
+ const def=PLANOS[p.plano]||PLANOS.piloto;
+ const fim=p.fim?new Date(p.fim+'T23:59:59'):null;
+ const expirado=p.status==='piloto'&&fim&&Date.now()>fim.getTime();
+ const ativo=p.status==='ativo'&&p.pagamento_status==='pago';
+ return `<section class="pn"><p class="cap">SEU PLANO</p><h2>${E(def.nome)}</h2><p class="big">${p.plano==='piloto'?'Gratuito':brl(def.preco)+'/mês'}</p><p>${E(def.desc)}</p><p class="cap">Situação: <b>${E(expirado?'Piloto encerrado':p.status==='ativo'?(p.pagamento_status==='pago'?'Ativo e pago':'Pagamento pendente'):p.status)}</b></p><p class="cap">${p.fim?'Fim do período: '+E(p.fim):'O período de teste começa quando o administrador o atribuir.'}</p>${expirado?'<p class="neg">Seu período de teste terminou. Seus dados foram preservados. Escolha um plano e entre em contato com o administrador para ativação.</p>':''}</section><section class="pn"><h2>Escolha seu plano</h2><p class="cap">A solicitação não efetua cobrança nem ativa o plano automaticamente.</p>${Object.entries(PLANOS).filter(([k])=>k!=='piloto').map(([k,v])=>`<article class="pn"><h3>${E(v.nome)}</h3><p class="big">${brl(v.preco)}/mês</p><p>${E(v.desc)}</p><button type="button" class="pri" data-a="solicitar-plano" data-plano="${k}">Solicitar este plano</button></article>`).join('')}</section>`;
+};
+async function carregarPlano(){
+ if(!sb||!USER)return;
+ const r=await sb.from('mf_assinaturas').select('plano,status,inicio,fim,pagamento_status').eq('user_id',USER.id).maybeSingle();
+ if(r.error){MF_PLAN=null;aviso('Não foi possível consultar seu plano. Execute a migração SQL de planos antes de usar esta função.');return}
+ MF_PLAN=r.data||null;
+}
+
 let rq;
 const render=()=>{cancelAnimationFrame(rq);rq=requestAnimationFrame(draw)};
 function draw(){
   document.documentElement.dataset.mod=S.m;
+  const pfim=MF_PLAN&&MF_PLAN.fim?new Date(MF_PLAN.fim+'T23:59:59'):null;
+  const bloqueado=MF_PLAN&&MF_PLAN.plano==='piloto'&&MF_PLAN.status==='piloto'&&pfim&&Date.now()>pfim.getTime();
+  if(bloqueado&&S.v!=='pl'){S.v='pl';}
+  if(MF_PLAN&&MF_PLAN.status==='ativo'&&MF_PLAN.pagamento_status!=='pago'&&S.v!=='pl'){S.v='pl';}
   $('#envn').textContent='Ambiente: '+CFG[S.m].nome;
   document.querySelectorAll('[data-m]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===S.m));
   document.querySelectorAll('[data-v]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.v));
-  $('#app').innerHTML=S.v==='p'?painel():S.v==='b'?bancoV():S.v==='c'?contasV():lanc();
+  $('#app').innerHTML=S.v==='pl'?planoV():S.v==='p'?painel():S.v==='b'?bancoV():S.v==='c'?contasV():lanc();
   $('[data-a=clr]').textContent='Apagar dados de '+CFG[S.m].nome;
 }
 
+async function solicitarPlano(plano){
+ if(!USER||!PLANOS[plano])return;
+ const r=await sb.from('mf_solicitacoes_plano').insert({user_id:USER.id,plano_solicitado:plano});
+ if(r.error){aviso('Não foi possível enviar a solicitação. Confirme se a migração SQL foi executada.');return}
+ aviso('Solicitação enviada. O plano só será ativado após confirmação manual do administrador.');
+}
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-m],[data-v],[data-a]');if(!b)return;
   const D=b.dataset,a=D.a;
   if(D.m)S.m=D.m;
   else if(D.v)S.v=D.v;
+  else if(a==='solicitar-plano'){solicitarPlano(D.plano);return}
   else if(a==='pm')S.mes=sh(S.mes,-1);
   else if(a==='nm')S.mes=sh(S.mes,1);
   else if(a==='go')S.v='l';
@@ -465,6 +501,7 @@ const msg=t=>{$('#lg-msg').textContent=t||''};
 const cred=()=>({email:$('#lg-em').value.trim(),password:$('#lg-pw').value});
 async function entrar(user){
   USER=user;AC={};
+  await carregarPlano();
   const r=await sb.from('mesa_dados').select('dados').eq('user_id',user.id).maybeSingle();
   if(r.error){msg('Não foi possível carregar seus dados. Confira se o arquivo supabase.sql foi executado.');return}
   RAW=(r.data&&r.data.dados)||{};
