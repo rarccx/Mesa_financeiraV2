@@ -1,43 +1,32 @@
-# Mesa Financeira — versão com planos (etapa inicial)
+# Mesa Financeira — Etapa 1: controle de planos
 
-## Conteúdo
-- `index.html`: interface atual com a seção **Meu plano**, seleção de plano e envio de solicitação.
-- `style.css`, `config.js`: arquivos base da aplicação.
-- `supabase-planos.sql`: migração incremental de planos e solicitações.
+## O que esta etapa inclui
+- Planos: Piloto acompanhado (14 dias), Essencial (R$ 29,90/mês), BPO Essencial (R$ 350/mês) e BPO + sistema (R$ 399/mês).
+- Registro de início, fim, status e situação do pagamento.
+- Criação automática do piloto para novos usuários por trigger no Supabase; preenchimento de usuários existentes sem assinatura.
+- Consulta individual da assinatura por RLS.
+- Solicitação de plano pelo cliente, sem ativação ou cobrança automática.
+- Tela de plano exibindo período e estado; a interface direciona para a tela de planos quando a assinatura está vencida, cancelada, pendente ou com pagamento não confirmado.
 
-## Publicação
-1. Faça backup dos arquivos atuais do repositório GitHub.
-2. No Supabase > SQL Editor, revise e execute `supabase-planos.sql`.
-3. No GitHub, substitua `index.html` pela versão deste pacote. Mantenha/substitua `style.css` e `config.js` pelos arquivos correspondentes.
-4. Não publique chave `service_role`. O `config.js` contém a chave pública anon; a segurança depende de RLS.
-5. Aguarde o GitHub Pages publicar e teste com uma conta de teste.
+## Arquivos
+- `index.html`: interface com ajustes de estado/expiração do plano.
+- `style.css`: estilos existentes.
+- `config.js`: configuração pública do Supabase do projeto.
+- `supabase-planos.sql`: migração SQL da etapa 1.
 
-## Ativar manualmente um plano
-A solicitação de plano é criada pelo cliente, mas a ativação é deliberadamente manual. No Supabase SQL Editor, confirme a solicitação e atualize a assinatura usando o UUID do usuário obtido em Authentication > Users. Exemplo:
+## Instalação segura
+1. Faça backup dos arquivos atuais no GitHub antes de substituir qualquer arquivo.
+2. No Supabase, abra **SQL Editor**, revise o script `supabase-planos.sql` e execute-o uma vez.
+3. Publique `index.html`, `style.css` e `config.js` no repositório do GitHub Pages.
+4. Teste com uma conta de teste recém-criada e confirme em `public.mf_assinaturas` que ela recebeu piloto de 14 dias.
+5. Teste com duas contas para confirmar que cada uma só consegue consultar a própria assinatura.
 
-```sql
-update public.mf_assinaturas
-set plano = 'essencial',
-    status = 'ativo',
-    inicio = current_date,
-    fim = null,
-    pagamento_status = 'pago',
-    atualizado_em = now()
-where user_id = 'UUID-DO-USUARIO';
-```
+## Ativação manual
+No Supabase SQL Editor, após confirmar o pagamento/contrato, use o exemplo comentado no final de `supabase-planos.sql` com o UUID correto. Para mensalidade, `fim=current_date + 30` é apenas um exemplo de período; ajuste ao ciclo de cobrança acordado.
 
-Para um piloto de 14 dias:
-```sql
-insert into public.mf_assinaturas(user_id, plano, status, inicio, fim, pagamento_status)
-values ('UUID-DO-USUARIO','piloto','piloto',current_date,current_date+13,'pendente')
-on conflict(user_id) do update set
- plano='piloto', status='piloto', inicio=current_date,
- fim=current_date+13, pagamento_status='pendente', atualizado_em=now();
-```
-
-## Limitações importantes desta entrega
-- A interface exibe plano e solicitações, mas **não inclui ainda um painel administrativo completo para operar clientes**. A gestão de planos está, nesta etapa, no SQL Editor.
-- O bloqueio por data nesta versão é de interface e não substitui autorização no banco/API. Para cobrança real e proteção efetiva das funções, a autorização precisa ser aplicada também em RLS/Edge Functions.
-- O app atual criptografa o conteúdo financeiro no navegador com uma senha de ambiente exclusiva do cliente. Isso impede que um operador BPO veja esses dados sem uma arquitetura de acesso delegado explícita. Não contorne isso compartilhando senhas. A próxima etapa deve migrar para um modelo multi-tenant com organizações, membros e permissões de operador, revisando RLS e o modelo criptográfico antes de liberar acesso a dados reais.
-- O script cria assinaturas para usuários já existentes. Novos cadastros precisam receber assinatura por trigger seguro ou Edge Function; não conceda permissão de escrita de plano ao usuário final.
-- Teste isolamento entre duas contas, expiração, recuperação de dados e políticas RLS antes de usar com clientes reais.
+## Limites desta etapa
+- O bloqueio de interface é uma proteção de navegação, não uma barreira de segurança suficiente para dados ou operações. A autorização de cada ação e os dados protegidos precisam ser validados no servidor/RLS nas etapas seguintes.
+- Ainda não há painel administrativo visual; a ativação é feita manualmente no SQL Editor nesta etapa.
+- A migração não configura cobrança automática.
+- A operação BPO com acesso delegado a dados de clientes não está incluída nesta etapa.
+- Antes de usar com dados financeiros reais, teste a migração, os fluxos de autenticação, o isolamento RLS e o comportamento após expiração.

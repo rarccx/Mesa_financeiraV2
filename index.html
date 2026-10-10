@@ -414,9 +414,11 @@ const planoV=()=>{
  const p=MF_PLAN||{plano:'piloto',status:'piloto',inicio:null,fim:null,pagamento_status:'pendente'};
  const def=PLANOS[p.plano]||PLANOS.piloto;
  const fim=p.fim?new Date(p.fim+'T23:59:59'):null;
- const expirado=p.status==='piloto'&&fim&&Date.now()>fim.getTime();
- const ativo=p.status==='ativo'&&p.pagamento_status==='pago';
- return `<section class="pn"><p class="cap">SEU PLANO</p><h2>${E(def.nome)}</h2><p class="big">${p.plano==='piloto'?'Gratuito':brl(def.preco)+'/mês'}</p><p>${E(def.desc)}</p><p class="cap">Situação: <b>${E(expirado?'Piloto encerrado':p.status==='ativo'?(p.pagamento_status==='pago'?'Ativo e pago':'Pagamento pendente'):p.status)}</b></p><p class="cap">${p.fim?'Fim do período: '+E(p.fim):'O período de teste começa quando o administrador o atribuir.'}</p>${expirado?'<p class="neg">Seu período de teste terminou. Seus dados foram preservados. Escolha um plano e entre em contato com o administrador para ativação.</p>':''}</section><section class="pn"><h2>Escolha seu plano</h2><p class="cap">A solicitação não efetua cobrança nem ativa o plano automaticamente.</p>${Object.entries(PLANOS).filter(([k])=>k!=='piloto').map(([k,v])=>`<article class="pn"><h3>${E(v.nome)}</h3><p class="big">${brl(v.preco)}/mês</p><p>${E(v.desc)}</p><button type="button" class="pri" data-a="solicitar-plano" data-plano="${k}">Solicitar este plano</button></article>`).join('')}</section>`;
+ const expirado=!!(fim&&Date.now()>fim.getTime());
+ const pilotoExpirado=expirado&&p.plano==='piloto';
+ const assinaturaExpirada=expirado&&p.plano!=='piloto';
+ const statusTexto=expirado?'Período encerrado':p.status==='ativo'?(p.pagamento_status==='pago'?'Ativo e pago':'Pagamento pendente'):p.status;
+ return `<section class="pn"><p class="cap">SEU PLANO</p><h2>${E(def.nome)}</h2><p class="big">${p.plano==='piloto'?'Gratuito':brl(def.preco)+'/mês'}</p><p>${E(def.desc)}</p><p class="cap">Situação: <b>${E(statusTexto)}</b></p><p class="cap">${p.inicio?'Início: '+E(p.inicio)+' · ':''}${p.fim?'Fim do período: '+E(p.fim):'Sem data de término definida.'}</p>${expirado?'<p class="neg">Seu período contratado terminou. Seus dados foram preservados. Escolha um plano ou entre em contato com o administrador para regularizar o acesso.</p>':''}</section><section class="pn"><h2>Escolha seu plano</h2><p class="cap">A solicitação não efetua cobrança nem ativa o plano automaticamente.</p>${Object.entries(PLANOS).filter(([k])=>k!=='piloto').map(([k,v])=>`<article class="pn"><h3>${E(v.nome)}</h3><p class="big">${brl(v.preco)}/mês</p><p>${E(v.desc)}</p><button type="button" class="pri" data-a="solicitar-plano" data-plano="${k}">Solicitar este plano</button></article>`).join('')}</section>`;
 };
 async function carregarPlano(){
  if(!sb||!USER)return;
@@ -430,9 +432,9 @@ const render=()=>{cancelAnimationFrame(rq);rq=requestAnimationFrame(draw)};
 function draw(){
   document.documentElement.dataset.mod=S.m;
   const pfim=MF_PLAN&&MF_PLAN.fim?new Date(MF_PLAN.fim+'T23:59:59'):null;
-  const bloqueado=MF_PLAN&&MF_PLAN.plano==='piloto'&&MF_PLAN.status==='piloto'&&pfim&&Date.now()>pfim.getTime();
+  const expirado=!!(MF_PLAN&&pfim&&Date.now()>pfim.getTime());
+  const bloqueado=MF_PLAN&&(expirado||MF_PLAN.status==='vencido'||MF_PLAN.status==='cancelado'||(MF_PLAN.status==='ativo'&&MF_PLAN.pagamento_status!=='pago')||MF_PLAN.status==='pendente');
   if(bloqueado&&S.v!=='pl'){S.v='pl';}
-  if(MF_PLAN&&MF_PLAN.status==='ativo'&&MF_PLAN.pagamento_status!=='pago'&&S.v!=='pl'){S.v='pl';}
   $('#envn').textContent='Ambiente: '+CFG[S.m].nome;
   document.querySelectorAll('[data-m]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===S.m));
   document.querySelectorAll('[data-v]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S.v));
