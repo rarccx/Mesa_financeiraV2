@@ -3,5 +3,5 @@
    A chave anon pode ficar no GitHub, desde que o RLS esteja ativo (veja supabase.sql). */
 window.MF_CONFIG={
   SB_URL:'https://gkszzxldbhewqdydetgb.supabase.co',   // ex.: https://abcdxyz.supabase.co
-  SB_KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZ2NveGtyZWZqY3pucWtudWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE0NzM4NzcsImV4cCI6MjEwNzA0OTg3N30.2IAd1GxJv3E1ZUJF748Lurx6ciraVS1ylFwQ2VqwZ3A'    // chave anon public
+  SB_KEY:''sb_publishable_8YCnEn4mWlBsaCRS6PZ7dw_zk2FdykG'    // chave anon public
 };
