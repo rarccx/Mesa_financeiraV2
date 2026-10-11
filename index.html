@@ -430,7 +430,7 @@ function draw(){
   $('[data-a=clr]').textContent='Apagar dados de '+CFG[S.m].nome;
 }
 
-document.addEventListener('click',e=>{
+document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-m],[data-v],[data-a]');if(!b)return;
   const D=b.dataset,a=D.a;
   if(D.m)S.m=D.m;
