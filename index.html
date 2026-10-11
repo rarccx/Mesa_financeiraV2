@@ -113,7 +113,7 @@ const SETPW=['invite','recovery'].includes(_h.get('type'));
 const AUTH_ERR=_h.get('error_description')||'';
 const CF=window.MF_CONFIG||{};
 const sb=window.supabase&&CF.SB_URL&&CF.SB_KEY?window.supabase.createClient(CF.SB_URL,CF.SB_KEY):null;
-let USER=null,tm,IS_ADMIN=false;
+let USER=null,tm,IS_ADMIN=false,ASSINATURA=null;
 const aviso=t=>{const a=$('#aviso');a.textContent=t||'';a.hidden=!t};
 let RAW={},KEY={},ENV='';
 const te=new TextEncoder(),td=new TextDecoder(),KDF=600000;
@@ -418,7 +418,7 @@ async function carregarSolicitacoes(){
   const r=await sb.from('mf_solicitacoes_plano').select('id,user_id,plano_solicitado,status,criado_em').order('criado_em',{ascending:false});
   if(r.error){host.innerHTML='<p class="neg">Não foi possível carregar solicitações: '+E(r.error.message)+'</p>';return}
   if(!r.data||!r.data.length){host.innerHTML='<p>Nenhuma solicitação encontrada.</p>';return}
-  host.innerHTML=r.data.map(x=>`<article class="pn" style="margin:12px 0"><b>Solicitação #${x.id}</b><p>Usuário: <code>${E(x.user_id)}</code></p><p>Plano: <b>${E(x.plano_solicitado)}</b></p><p>Status: ${E(x.status)}</p><p>Data: ${E(new Date(x.criado_em).toLocaleString('pt-BR'))}</p>${x.status==='aberta'?`<button class="pri" data-a="admin-approve" data-id="${x.id}">Aprovar</button> <button data-a="admin-reject" data-id="${x.id}">Recusar</button>`:''}</article>`).join('');
+  host.innerHTML=r.data.map(x=>`<article class="pn" style="margin:12px 0"><b>Solicitação #${x.id}</b><p>Usuário: <code>${E(x.user_id)}</code></p><p>Plano: <b>${E(x.plano_solicitado)}</b></p><p>Status: ${E(x.status)}</p><p>Data: ${E(new Date(x.criado_em).toLocaleString('pt-BR'))}</p>${x.status==='aberta'?`<button class="pri" data-a="admin-approve" data-id="${x.id}">Aprovar</button> <button data-a="admin-reject" data-id="${x.id}">Recusar</button>`:''}${x.status==='aprovada'?`<button class="pri" data-a="admin-paid" data-user="${E(x.user_id)}">Confirmar pagamento recebido</button>`:''}</article>`).join('');
 }
 function draw(){
   document.documentElement.dataset.mod=S.m;
@@ -448,6 +448,14 @@ document.addEventListener('click',async e=>{
   else if(a==='att'){$('#fi').dataset.id=D.id;$('#fi').click();return}
   else if(a==='del'){const x=S[S.m].l.find(l=>l.id===D.id);if(x&&x.a&&sb)sb.storage.from('comprovantes').remove([x.a.p]);S[S.m].l=S[S.m].l.filter(l=>l.id!==D.id)}
   else if(a==='admin-refresh'){if(!IS_ADMIN)return;render();return}
+  else if(a==='admin-paid'){
+    if(!IS_ADMIN||!USER){aviso('Acesso administrativo não autorizado.');return}
+    const userId=D.user;if(!userId)return;
+    if(!confirm('Confirma que o pagamento foi realmente recebido para este cliente?'))return;
+    b.disabled=true;const r=await sb.rpc('mf_admin_confirmar_pagamento',{p_user_id:userId});
+    if(r.error){aviso('Não foi possível confirmar o pagamento: '+r.error.message);b.disabled=false;return}
+    aviso('Pagamento confirmado e assinatura ativada.');await carregarSolicitacoes();return
+  }
   else if(a==='admin-approve'||a==='admin-reject'){
     if(!IS_ADMIN||!USER){aviso('Acesso administrativo não autorizado.');return}
     const id=Number(D.id);if(!Number.isSafeInteger(id)||id<=0)return;
@@ -492,13 +500,34 @@ document.addEventListener('change',async e=>{
 const msg=t=>{$('#lg-msg').textContent=t||''};
 const cred=()=>({email:$('#lg-em').value.trim(),password:$('#lg-pw').value});
 async function entrar(user){
-  USER=user;AC={};
+  USER=user;AC={};ASSINATURA=null;
   await verificarAdmin();
+  // Confere o estado da assinatura no banco antes de abrir qualquer ambiente financeiro.
+  const sub=await sb.from('mf_assinaturas').select('plano,status,pagamento_status,inicio,fim').eq('user_id',user.id).maybeSingle();
+  if(sub.error){msg('Não foi possível verificar seu plano. Por segurança, o acesso financeiro foi interrompido. Confira as políticas RLS da tabela mf_assinaturas.');return}
+  ASSINATURA=sub.data||null;
+  if(!IS_ADMIN && ASSINATURA && ASSINATURA.plano!=='piloto' && !(ASSINATURA.status==='ativo' && ASSINATURA.pagamento_status==='pago')){
+    mostrarPagamento();return;
+  }
+  if(!IS_ADMIN && ASSINATURA && ASSINATURA.plano==='piloto' && ASSINATURA.fim && ASSINATURA.fim < new Date().toISOString().slice(0,10)){
+    mostrarPagamento();return;
+  }
   const r=await sb.from('mesa_dados').select('dados').eq('user_id',user.id).maybeSingle();
   if(r.error){msg('Não foi possível carregar seus dados. Confira se o arquivo supabase.sql foi executado.');return}
   RAW=(r.data&&r.data.dados)||{};
   $('#who').textContent=user.email;$('#lg-pw').value='';msg('');
   escolher();
+}
+function mostrarPagamento(){
+  ['lg','np','pw','ev','amb'].forEach(x=>{const el=$('#'+x);if(el)el.hidden=true});
+  $('#gate').hidden=false;$('#sair').hidden=false;$('#app').innerHTML='';
+  const nome=({essencial:'Mesa Financeira Essencial',bpo:'BPO Essencial',bpo_sistema:'BPO + sistema',piloto:'Piloto acompanhado'})[ASSINATURA?.plano]||'Plano solicitado';
+  const status=ASSINATURA?.pagamento_status==='atrasado'?'Pagamento em atraso':'Aguardando confirmação do pagamento';
+  $('#gate').innerHTML=`<section class="pn" style="max-width:680px;margin:32px auto"><h2>Plano aguardando pagamento</h2><p>Seu plano: <b>${nome}</b></p><p><b>${status}</b></p><p>As funcionalidades financeiras estão temporariamente bloqueadas. Entre em contato com a administração para receber as instruções de pagamento. O acesso será liberado após a confirmação manual.</p><p>Não faça pagamentos para dados que não tenham sido confirmados oficialmente pela Mesa Financeira.</p><button id="pay-refresh" class="pri">Verificar novamente</button> <button id="plan-change">Solicitar outro plano</button> <button id="pay-exit">Sair</button><div id="plan-box" hidden style="margin-top:18px;text-align:left"><h3>Solicitar plano</h3><label class="f">Plano<select id="plan-choice"><option value="essencial">Mesa Financeira Essencial — R$ 29,90/mês</option><option value="bpo">BPO Essencial — R$ 350/mês</option><option value="bpo_sistema">BPO + sistema — R$ 399/mês</option></select></label><button id="plan-send" class="pri">Enviar solicitação</button><p id="plan-msg" role="status"></p></div></section>`;
+  $('#pay-refresh').onclick=async()=>{const r=await sb.from('mf_assinaturas').select('plano,status,pagamento_status,inicio,fim').eq('user_id',USER.id).maybeSingle();if(r.error){aviso('Não foi possível atualizar o status.');return}ASSINATURA=r.data||null;if(ASSINATURA?.plano==='piloto'||(ASSINATURA?.status==='ativo'&&ASSINATURA?.pagamento_status==='pago')){entrar(USER)}else{mostrarPagamento()}};
+  $('#plan-change').onclick=()=>{$('#plan-box').hidden=!$('#plan-box').hidden};
+  $('#plan-send').onclick=async()=>{const plan=$('#plan-choice').value;const btn=$('#plan-send');btn.disabled=true;const r=await sb.rpc('mf_solicitar_plano',{p_plano:plan});if(r.error){$('#plan-msg').textContent='Não foi possível solicitar: '+r.error.message;btn.disabled=false;return}$('#plan-msg').textContent='Solicitação enviada. Aguarde a análise da administração.';btn.disabled=false};
+  $('#pay-exit').onclick=async()=>{await sb.auth.signOut();location.reload()};
 }
 function escolher(){
   ['pf','pj'].forEach(m=>{const b=RAW[m];$('#ev-'+m).textContent=b&&b.enc?'Protegido por senha':b&&b.l?'Dados sem proteção. Toque para criar a senha':'Novo ambiente. Toque para criar a senha'});
