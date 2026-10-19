@@ -1,0 +1,3 @@
+Para usar: coloque index.html e style.css no diretório atual do site e mantenha o config.js já configurado junto deles. Não substitua o config.js por um arquivo vazio.
+
+O botão para código IBGE consulta a API de Localidades do IBGE pela cidade e UF. Para consultar IE sem API paga, o botão abre o Cadastro Centralizado de Contribuintes oficial com o CNPJ preenchido; selecione a UF indicada pelo código IBGE. O portal pode solicitar login Gov.br. Depois de conferir a IE, preencha o campo no cadastro.
