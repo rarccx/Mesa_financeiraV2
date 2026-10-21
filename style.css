@@ -241,6 +241,45 @@ body {
 .v.pos, .pos { color: var(--income); }
 .neg { color: var(--expense); }
 
+/* CORREÇÃO: Maiores Saídas do Mês - Layout em Grid com Espaçamento */
+.cats {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cats li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.cats li:last-child {
+  border-bottom: none;
+}
+
+.cats li span {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.cats li b {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* Inputs e Formulários */
 .f {
   display: flex;
