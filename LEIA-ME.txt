@@ -1,0 +1,22 @@
+MESA FINANCEIRA - PACOTE DE CORREÇÕES
+
+COMO PUBLICAR
+1. Envie TODOS os arquivos desta pasta para o site, substituindo os atuais
+   (index.html, style.css, config.js, manifest.webmanifest, sw.js, icons/...).
+   O arquivo sw.js é novo e precisa ficar na mesma pasta do index.html.
+2. No Supabase, abra SQL Editor, cole o conteúdo de supabase-seguranca.sql e clique em Run.
+   A última consulta deve voltar vazia (todas as tabelas protegidas).
+   O arquivo .sql NÃO precisa ir para o site.
+
+O QUE MUDOU
+- Segurança: a biblioteca externa agora é verificada (se for adulterada, não carrega)
+  e o site só se comunica com o seu banco e as fontes do Google.
+- Banco: regras para que cada cliente só veja os próprios dados, e para que só
+  o administrador altere planos e módulos.
+- Proteção contra perda: se os dados forem alterados em outro aparelho/aba,
+  o app avisa e não sobrescreve. Basta tocar em Atualizar.
+- Confirmações: as janelas de "Tem certeza?" agora seguem o visual do app.
+- Offline: no site publicado, o app abre mesmo sem internet (os dados
+  financeiros continuam vindo só do banco, nunca ficam salvos no aparelho).
+  Para desligar em caso de problema: abra o site com ?sw=off no final do endereço.
+- App instalado: ícone, nome e cores agora batem com o visual do painel.
