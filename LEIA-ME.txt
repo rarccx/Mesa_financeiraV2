@@ -1,9 +1,0 @@
-ATUALIZAÇÃO DO PAINEL
-
-Este pacote contém somente os arquivos necessários para esta atualização.
-
-Para publicar: envie index.html, style.css e config.js para a mesma pasta do site, substituindo os arquivos atuais. Não deixe apenas o index.html: ele carrega os outros dois arquivos.
-
-A configuração incluída aponta para o projeto Supabase atualmente configurado neste pacote e usa a chave pública anon. Se seu site já usa outro projeto Supabase, mantenha o config.js que já funciona no site.
-
-Os arquivos JSON de importação da planilha não são necessários para esta atualização.
