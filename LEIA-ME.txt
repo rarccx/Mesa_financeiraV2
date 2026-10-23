@@ -1,22 +1,80 @@
-MESA FINANCEIRA - PACOTE DE CORREÇÕES
+Mesa Financeira — v6 — Google com liberação individual
 
-COMO PUBLICAR
-1. Envie TODOS os arquivos desta pasta para o site, substituindo os atuais
-   (index.html, style.css, config.js, manifest.webmanifest, sw.js, icons/...).
-   O arquivo sw.js é novo e precisa ficar na mesma pasta do index.html.
-2. No Supabase, abra SQL Editor, cole o conteúdo de supabase-seguranca.sql e clique em Run.
-   A última consulta deve voltar vazia (todas as tabelas protegidas).
-   O arquivo .sql NÃO precisa ir para o site.
+IMPORTANTE
+Esta versão foi preparada e testada em ambiente isolado, com contas fictícias.
+Não acessamos seu banco nem ativamos Google na sua conta. Não publique apenas
+os arquivos de tela sem concluir a configuração de segurança abaixo.
+A senha de cada ambiente PF/PJ continua obrigatória e não foi alterada.
+O login por e-mail/senha continua como antes. A liberação aqui é só para Google.
+Google deve ser o único provedor social habilitado: as regras também bloqueiam
+outros acessos OAuth. Não habilite outro provedor sem revisar estas regras.
 
-O QUE MUDOU
-- Segurança: a biblioteca externa agora é verificada (se for adulterada, não carrega)
-  e o site só se comunica com o seu banco e as fontes do Google.
-- Banco: regras para que cada cliente só veja os próprios dados, e para que só
-  o administrador altere planos e módulos.
-- Proteção contra perda: se os dados forem alterados em outro aparelho/aba,
-  o app avisa e não sobrescreve. Basta tocar em Atualizar.
-- Confirmações: as janelas de "Tem certeza?" agora seguem o visual do app.
-- Offline: no site publicado, o app abre mesmo sem internet (os dados
-  financeiros continuam vindo só do banco, nunca ficam salvos no aparelho).
-  Para desligar em caso de problema: abra o site com ?sw=off no final do endereço.
-- App instalado: ícone, nome e cores agora batem com o visual do painel.
+1. PREPARAÇÃO
+Faça backup antes. Mantenha a v5 para voltar se necessário.
+No painel do seu serviço atual, confirme que sou_admin() identifica o
+administrador de forma segura no servidor. Não use dados de perfil para cargos.
+Se já houver tabelas mf_profiles ou mf_google_allowlist, ou Auth Hooks ativos,
+não rode este arquivo: precisamos integrar as regras às existentes primeiro.
+O script é de instalação única; repetir dá erro e desfaz a segunda execução.
+
+2. INSTALAR SEGURANÇA
+No SQL Editor execute google-acesso.sql inteiro. Ele cria perfis, autorização
+individual e proteção adicional, sem apagar dados nem substituir suas políticas.
+No painel Authentication > Hooks configure:
+- Before User Created: função public.mf_before_user_created
+- Custom Access Token: função public.mf_custom_access_token
+Ative ambos ANTES de ativar Google. Se não conseguir ativar ambos, não prossiga.
+Não substitua um hook existente: envie sua configuração para integrar as regras.
+As políticas anteriores precisam continuar restringindo cada cliente ao próprio
+user_id. Verifique também funções que usam chaves privilegiadas: elas ignoram
+RLS e precisam validar a sessão/autorização internamente; não foram acessadas.
+A proteção adicional alcança tabelas públicas com RLS existente e Storage.
+Para tabelas novas, adicione também mf_google_session_guard como neste script.
+
+3. CONFIGURAR GOOGLE
+No Google Cloud Console > Google Auth Platform:
+- Configure Branding/consentimento, domínio e política de privacidade.
+- Crie um OAuth Client de tipo Web application.
+- Em Authorized redirect URIs use EXATAMENTE a URL de callback exibida
+  pelo painel em Authentication > Sign In / Providers > Google.
+- Copie Client ID e Client Secret para esse painel e habilite Google.
+Nunca coloque Client Secret, chave service_role ou senha no config.js ou HTML.
+Em Authentication > URL Configuration:
+- Site URL: endereço HTTPS real do seu site.
+- Redirect URLs: endereço HTTPS exato onde está o index.html, inclusive
+  caminho/subpasta se houver. Não use curingas amplos em produção.
+Desative Manual identity linking: esta versão não permite associar outro e-mail.
+O Google deve usar o MESMO e-mail confirmado da conta existente.
+O vínculo automático mantém o mesmo usuário e seus dados; não transfere contas.
+Se o Google estiver em modo Testing, inclua os clientes em Test users ou publique
+na configuração do Google, conforme suas exigências de consentimento.
+
+4. PUBLICAR E LIBERAR
+Suba index.html, app.js, google-access.js, sw-register.js, menu.js e
+login-carousel.js da v6. Preserve config.js, style.css, ícones, sw.js e demais
+arquivos da hospedagem. Não publique os arquivos SQL/teste no diretório público.
+Abra com Ctrl+F5. Entre como administrador pela senha atual.
+Em Clientes e planos marque “Liberar Google para este e-mail” para cada cliente.
+Ninguém foi liberado automaticamente. O cliente precisa existir e ter seu
+mesmo e-mail confirmado. Desmarcar remove a liberação.
+
+5. TESTAR ANTES DE DISPONIBILIZAR
+- Conta existente e liberada: Entrar com Google, escolher a conta correta;
+  confirmar o e-mail exibido, abrir PF/PJ com a senha atual, conferir dados;
+  criar lançamento de teste, sair, entrar novamente e conferir que foi salvo.
+- Conta existente não liberada: Google deve negar entrada.
+- E-mail Google novo: deve negar entrada sem criar cliente no cadastro.
+- Revogar liberação: novo login Google e consulta/gravação por sessão Google
+  anterior devem ser negados. Login por senha permanece disponível.
+- Dois clientes: cada um só acessa seus dados, nunca os do outro.
+Também testar recuperação por e-mail e acesso como administrador.
+Se algum teste falhar, desative Google e volte aos arquivos da v5 antes de usar.
+
+TESTES ENTREGUES
+13 verificações de regras executadas com PostgreSQL isolado (PGlite).
+Para repetir: em uma pasta de teste, instale @electric-sql/pglite e execute
+node google-acesso.test.mjs, mantendo google-acesso.sql ao lado do teste.
+Isso não conecta ao banco de produção.
+O botão/retorno Google foi verificado no navegador com respostas simuladas.
+O consentimento real Google e as configurações hospedadas ainda precisam
+ser verificados por você no passo 5; não estão ativados por estes arquivos.
