@@ -810,8 +810,8 @@ function demo(){
 /* ---------- planos e módulos ---------- */
 const PLANOS={
  ess:{n:'Essencial',c:'Essencial',p:'R$ 19,90/mês',f:['Painel com resumo e recomendações','Lançamentos únicos, pagos ou em aberto','Uma conta bancária com saldo e extrato','Categorias e histórico por mês','Regra 50/30/20 com metas, leitura do mês e explicações (pessoa física)']},
- bpo:{n:'Gestão',c:'Gestão',p:'R$ 59,90/mês nos 3 primeiros meses; depois R$ 79,90/mês',f:['Tudo do Essencial','Contas a pagar e a receber com alertas de vencimento','Parcelamento e lançamentos recorrentes','Comprovantes anexados aos lançamentos','Fluxo de caixa projetado por mês','Calculadora de preço de venda (pessoa jurídica) e botão com os dados do mês','Cartões e parcelas, faturas e reserva de emergência (pessoa física)','Cadastro de clientes PJ com código sequencial']},
- pro:{n:'Pro',c:'Pro',p:'R$ 99,90/mês nos 3 primeiros meses; depois R$ 129,90/mês',f:['Tudo do Gestão','DRE gerencial por mês','Orçamento previsto x realizado e metas','Cenários de projeção de caixa','Várias contas bancárias consolidadas','Exportação dos lançamentos em CSV','Precificação completa: preço mínimo, margem real, lista de produtos e explicações']}
+ bpo:{n:'Gestão',c:'Gestão',p:'R$ 29,90/mês nos 3 primeiros meses; depois R$ 59,90/mês',f:['Tudo do Essencial','Contas a pagar e a receber com alertas de vencimento','Parcelamento e lançamentos recorrentes','Comprovantes anexados aos lançamentos','Fluxo de caixa projetado por mês','Calculadora de preço de venda (pessoa jurídica) e botão com os dados do mês','Cartões e parcelas, faturas e reserva de emergência (pessoa física)','Cadastro de clientes PJ com código sequencial']},
+ pro:{n:'Pro',c:'Pro',p:'R$ 49,90/mês nos 3 primeiros meses; depois R$ 79,90/mês',f:['Tudo do Gestão','DRE gerencial por mês','Orçamento previsto x realizado e metas','Cenários de projeção de caixa','Várias contas bancárias consolidadas','Exportação dos lançamentos em CSV','Precificação completa: preço mínimo, margem real, lista de produtos e explicações']}
 };
 const NIV={ess:1,bpo:2,pro:3},NOME=['','ess','bpo','pro'],LK={2:'Gestão',3:'Pro'};
 let PL='ess';
