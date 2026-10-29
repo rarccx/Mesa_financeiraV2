@@ -668,7 +668,7 @@ function bancoV(){
     <label class="f full">Nome do banco ou conta<input name="nome" required maxlength="40" placeholder="Ex.: Nubank, Itaú PJ, Caixa" value="${ed?E(ed.nome):''}"></label>
     <label class="f">Saldo inicial (R$)<input name="s" required inputmode="decimal" placeholder="0,00" value="${ed?(ed.saldo/100).toFixed(2).replace('.',','):''}"></label>
     <label class="f">Na data<input name="d" type="date" required value="${ed?ed.d:t}"></label>
-    <p class="cap full">${bs.length&&!ed&&!tem(3)?'Mais de uma conta bancária faz parte do plano BPO + Sistema. ':''}Entradas a partir dessa data somam ao saldo e saídas descontam. Lançamentos de datas futuras e contas em aberto entram só na projeção.</p>
+    <p class="cap full">${bs.length&&!ed&&!tem(3)?'Mais de uma conta bancária faz parte do plano Pro. ':''}Entradas a partir dessa data somam ao saldo e saídas descontam. Lançamentos de datas futuras e contas em aberto entram só na projeção.</p>
     <button class="pri full" type="submit">${ed?'Salvar alterações':'Adicionar conta'}</button>
     ${ed?`<button type="button" data-a="cb">Cancelar</button><button type="button" class="neg-b" data-a="db" data-id="${ed.id}">Excluir conta</button>`:''}
   </form>
@@ -778,7 +778,7 @@ function lanc(){
     <label class="f full"><span><input name="smsconsent" type="checkbox"> Confirmo que este número autorizou o recebimento de lembretes por SMS.</span></label>
     <label class="f">Repetição<select name="rep"><option value="u">Lançamento único</option><option value="r">Repetir o mesmo valor todo mês</option>${tem(2)?'<option value="d">Parcelar: dividir o valor total</option>':''}</select></label>
     <label class="f">Número de meses<input name="n" type="number" min="2" max="120" inputmode="numeric" placeholder="Ex.: 5" disabled></label>
-    <p class="cap full">${tem(2)?'':'Parcelar em partes iguais faz parte do plano BPO Financeiro Essencial. '}Repetir lança o mesmo valor em cada mês, ideal para empréstimo com parcela fixa, aluguel ou assinatura. A primeira segue a situação escolhida e as demais ficam em aberto, nos meses seguintes.</p>
+    <p class="cap full">${tem(2)?'':'Parcelar em partes iguais faz parte do plano Gestão. '}Repetir lança o mesmo valor em cada mês, ideal para empréstimo com parcela fixa, aluguel ou assinatura. A primeira segue a situação escolhida e as demais ficam em aberto, nos meses seguintes.</p>
     ${tem(2)?'<label class="f full">Comprovante (opcional)<input name="arq" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg"></label>':''}
     <button class="pri full" type="submit">Adicionar lançamento</button>`}
     <p class="neg full" id="er" role="alert" hidden>Digite um valor maior que zero, por exemplo 1.250,00.</p>
@@ -810,10 +810,10 @@ function demo(){
 /* ---------- planos e módulos ---------- */
 const PLANOS={
  ess:{n:'Essencial',c:'Essencial',p:'R$ 19,90/mês',f:['Painel com resumo e recomendações','Lançamentos únicos, pagos ou em aberto','Uma conta bancária com saldo e extrato','Categorias e histórico por mês','Regra 50/30/20 com metas, leitura do mês e explicações (pessoa física)']},
- bpo:{n:'BPO Financeiro Essencial',c:'BPO',p:'R$ 59,90/mês nos 3 primeiros meses; depois R$ 79,90/mês',f:['Tudo do Essencial','Contas a pagar e a receber com alertas de vencimento','Parcelamento e lançamentos recorrentes','Comprovantes anexados aos lançamentos','Fluxo de caixa projetado por mês','Calculadora de preço de venda (pessoa jurídica) e botão com os dados do mês','Cartões e parcelas, faturas e reserva de emergência (pessoa física)','Cadastro de clientes PJ com código sequencial']},
- pro:{n:'BPO + Sistema',c:'Pro',p:'R$ 99,90/mês nos 3 primeiros meses; depois R$ 129,90/mês',f:['Tudo do BPO Financeiro Essencial','DRE gerencial por mês','Orçamento previsto x realizado e metas','Cenários de projeção de caixa','Várias contas bancárias consolidadas','Exportação dos lançamentos em CSV','Precificação completa: preço mínimo, margem real, lista de produtos e explicações']}
+ bpo:{n:'Gestão',c:'Gestão',p:'R$ 59,90/mês nos 3 primeiros meses; depois R$ 79,90/mês',f:['Tudo do Essencial','Contas a pagar e a receber com alertas de vencimento','Parcelamento e lançamentos recorrentes','Comprovantes anexados aos lançamentos','Fluxo de caixa projetado por mês','Calculadora de preço de venda (pessoa jurídica) e botão com os dados do mês','Cartões e parcelas, faturas e reserva de emergência (pessoa física)','Cadastro de clientes PJ com código sequencial']},
+ pro:{n:'Pro',c:'Pro',p:'R$ 99,90/mês nos 3 primeiros meses; depois R$ 129,90/mês',f:['Tudo do Gestão','DRE gerencial por mês','Orçamento previsto x realizado e metas','Cenários de projeção de caixa','Várias contas bancárias consolidadas','Exportação dos lançamentos em CSV','Precificação completa: preço mínimo, margem real, lista de produtos e explicações']}
 };
-const NIV={ess:1,bpo:2,pro:3},NOME=['','ess','bpo','pro'],LK={2:'BPO',3:'Pro'};
+const NIV={ess:1,bpo:2,pro:3},NOME=['','ess','bpo','pro'],LK={2:'Gestão',3:'Pro'};
 let PL='ess';
 const tem=n=>NIV[PL]>=n;
 const TABS=[['p','Painel',1],['nt','Avisos',1],['l','Lançamentos',1],['cr','A receber',2],['sales','Vendas',2],['clients','Clientes',2],['vd','Vendas diárias',1],['cp','A pagar',2],['c','Visão geral',2],['b','Banco',1],['imp','Importar extrato',2],['f','Fluxo',2],['b5','Regra 50/30/20',1],['cc','Cartões',2],['rv','Reserva',2],['o','Orçamento',3],['r','DRE',3],['pre','Precificação',2],['aj','Ajustes',1],['cad','Cadastro PF/PJ',1],['wa','WhatsApp',1],['lg','Privacidade e LGPD',1],['u','Meu plano',1],['a','Admin',1]];
@@ -875,7 +875,7 @@ function precV(){
    '<p class="cap full">Soma dos percentuais: '+pf1(soma)+'%. O botão preenche impostos e despesas fixas dividindo o que foi lançado no mês pela receita do mês. Comissão, taxa e lucro desejado você informa.</p></section>';
   if(!full){
     h+=precCard(X.calc||{custo:0,frete:0},par,false,true)+
-     '<section class="pn em"><h2>Mais no plano BPO + Sistema</h2><p>Preço mínimo e preço de piso, margem real do preço que você pratica, lista de produtos salva e explicações de markup e margem.</p><div class="ac"><button class="pri" data-v="u">Ver planos</button></div></section>';
+     '<section class="pn em"><h2>Mais no plano Pro</h2><p>Preço mínimo e preço de piso, margem real do preço que você pratica, lista de produtos salva e explicações de markup e margem.</p><div class="ac"><button class="pri" data-v="u">Ver planos</button></div></section>';
     return h;
   }
   const L=X.prod||[];
@@ -1067,7 +1067,7 @@ function adminV(){
   const fd=d=>d?d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4):'nunca';
   const rows=ADL.map(u=>`<li class="adm"><div><b>${E(u.email||'(sem e-mail)')}</b>${u.user_id===SALVO?' <span class="pos">· salvo</span>':''}<small>Último acesso: ${fd(u.ultimo_acesso)}</small><label class="module-option"><input type="checkbox" data-google-user="${E(u.user_id)}" ${GOOGLE_ADMIN_ERROR?'disabled':''} ${GOOGLE_ALLOWED[u.user_id]?'checked':''}> <span>Liberar Google para este e-mail</span></label><label class="module-option"><input type="checkbox" data-user-module="${u.user_id}" ${ADMIN_MODULE_ERROR?'disabled':''} ${ADMIN_USER_MODULES[u.user_id]?.vendas_diarias?'checked':''}> <span>Ativar Vendas diárias para este cliente</span></label><label class="module-option"><input type="checkbox" data-user-env="${u.user_id}" data-env-key="pf" ${ADMIN_MODULE_ERROR?'disabled':''} ${ADMIN_USER_MODULES[u.user_id]?.ambientes?.pf===true?'checked':''}> <span>Liberar ambiente Pessoa Física</span></label><label class="module-option"><input type="checkbox" data-user-env="${u.user_id}" data-env-key="pj" ${ADMIN_MODULE_ERROR?'disabled':''} ${ADMIN_USER_MODULES[u.user_id]?.ambientes?.pj===true?'checked':''}> <span>Liberar ambiente Pessoa Jurídica</span></label></div><select data-pl="${u.user_id}" aria-label="Plano de ${E(u.email||'')}">${['ess','bpo','pro'].map(k=>`<option value="${k}"${u.plano===k?' selected':''}>${PLANOS[k].c}</option>`).join('')}</select><input type="date" data-vd="${u.user_id}" value="${u.valido_ate||''}" aria-label="Válido até"><button class="pri sm" data-a="admsv" data-id="${u.user_id}">Salvar</button></li>`).join('');
   const modCards=['ess','bpo','pro'].map(k=>`<section class="pn"><details class="module-details"><summary><b>Módulos do plano ${PLANOS[k].n}</b><span class="cap">Editar módulos</span></summary><p class="cap">Marque as abas disponíveis para este plano.</p><p class="cap" data-module-status="${k}">${PMError?'Configuração indisponível — confira o aviso acima.':'As alterações são salvas automaticamente.'}</p><div class="module-grid">${Object.entries(MOD_LABELS).map(([id,label])=>`<label class="module-option"><input type="checkbox" data-plan-module="${k}" data-module="${id}" ${modOn(k,id)?'checked':''}> <span>${label}</span></label>`).join('')}</div><button class="pri sm" data-a="save-modules" data-plan="${k}">Salvar módulos agora</button></details></section>`).join('');
-  return`<section class="pn hero"><p class="cap">Painel administrativo</p><p class="big" style="font-size:30px">${ADL.length} ${ADL.length===1?'cliente':'clientes'}</p><p class="cap">Essencial ${c.ess} · BPO ${c.bpo} · Pro ${c.pro}</p></section>
+  return`<section class="pn hero"><p class="cap">Painel administrativo</p><p class="big" style="font-size:30px">${ADL.length} ${ADL.length===1?'cliente':'clientes'}</p><p class="cap">Essencial ${c.ess} · Gestão ${c.bpo} · Pro ${c.pro}</p></section>
   <section class="pn"><h2>Clientes e planos</h2><ul class="ls">${rows}</ul><div class="ac"><button data-a="admr">Atualizar lista</button></div></section>
   ${PMError?`<section class="pn em"><b>Configuração de módulos não carregada.</b><p>Execute o arquivo supabase-plan-modules.sql no SQL Editor do Supabase para criar a tabela e as permissões necessárias.</p><small>${E(PMError)}</small></section>`:''}
   ${ADMIN_MODULE_ERROR?`<section class="pn em"><b>Ativação de módulos por cliente indisponível.</b><p>Execute o arquivo supabase-client-modules.sql no SQL Editor do Supabase e atualize a lista de clientes.</p><small>${E(ADMIN_MODULE_ERROR)}</small></section>`:''}
@@ -1407,7 +1407,7 @@ document.addEventListener('click',async e=>{
   }
   else if(a==='import-confirm'){const rows=window.__mfImportRows||[],checks=[...document.querySelectorAll('[data-import-row]')];let count=0,skipped=0;rows.forEach((x,i)=>{const checkbox=checks.find(c=>Number(c.dataset.importRow)===i);if(checkbox&&!checkbox.checked){skipped++;return}if(!x||!x.d||!x.desc||!(Math.abs(Number(x.v))>0))return;const dir=document.querySelector(`[data-import-direction="${i}"]`)?.value||(Number(x.signed)>0?'entrada':'saida'),amount=Math.abs(Number(x.v))*(dir==='entrada'?1:-1),selected=document.querySelector(`[data-import-category="${i}"]`)?.value||x._cat,category=importCategories(dir).some(c=>c[0]===selected)?selected:importFallbackCategory(dir);if(!category){skipped++;return}S[S.m].l.push({id:'imp_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),d:x.d,desc:x.desc.slice(0,80),v:amount,c:category,st:'p',b:bancos(S.m)[0]?.id||'',src:'import'});count++});window.__mfImportRows=[];save();aviso(count+' lançamento(s) importado(s) com as categorias revisadas. '+skipped+' ignorado(s), incluindo possíveis duplicados desmarcados.');S.v='l';render();return}
   else if(a==='ver'){abrir(D.p);return}
-  else if((a==='att'||a==='ver')&&!tem(2)){aviso('Comprovantes fazem parte do plano BPO Financeiro Essencial.');return}
+  else if((a==='att'||a==='ver')&&!tem(2)){aviso('Comprovantes fazem parte do plano Gestão.');return}
   else if(a==='csv'){csv();return}
   else if(a==='admr'){ADL=null;SALVO=''}
   else if(a==='admsv'){
@@ -1633,7 +1633,7 @@ document.addEventListener('submit',async e=>{
   }
   if(f.id==='bkf'){
     e.preventDefault();
-    if(!S.be&&bancos(S.m).length>=1&&!tem(3)){aviso('Mais de uma conta bancária faz parte do plano BPO + Sistema.');return}
+    if(!S.be&&bancos(S.m).length>=1&&!tem(3)){aviso('Mais de uma conta bancária faz parte do plano Pro.');return}
     const o={nome:f.nome.value.trim(),saldo:val(f.s.value),d:f.d.value},bs=S[S.m].bks=S[S.m].bks||[],b=bs.find(x=>x.id===S.be);
     if(b)Object.assign(b,o);else bs.push(Object.assign({id:uid()},o));
     S.be='';save();render();return;
