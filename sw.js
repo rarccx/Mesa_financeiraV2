@@ -1,7 +1,7 @@
 /* Mesa Financeira - funcionamento offline básico.
    Páginas: sempre tenta a internet primeiro e usa a cópia salva só sem conexão.
    Dados financeiros NUNCA são guardados aqui (requisições ao banco são ignoradas). */
-const CACHE = 'mf-shell-v11';
+const CACHE = 'mf-shell-v12';
 const SHELL = ['./', 'index.html', 'style.css', 'config.js', 'manifest.webmanifest', 'favicon.ico',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
