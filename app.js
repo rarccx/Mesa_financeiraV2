@@ -1842,6 +1842,23 @@ $('#lg-google').addEventListener('click',async()=>{
 });
 $('#lg').addEventListener('submit',async e=>{
   e.preventDefault();if(!sb)return;msg('');
+  const ident=$('#lg-em').value.trim();
+  if(!MFUsuario.ehEmail(ident)){
+    const lb=$('#lg button[type=submit]');lb.disabled=true;
+    try{
+      const u=MFUsuario.normalizar(ident);
+      if(MFUsuario.validar(u))return msg('Usuário ou senha inválidos.');
+      const {data,error}=await sb.functions.invoke('funcao-entrar-usuario',{body:{usuario:u,senha:$('#lg-pw').value}});
+      if(error||!data?.access_token){
+        const st=error?.context?.status;
+        return msg(st===429?'Muitas tentativas. Aguarde alguns minutos.':st===401||st===400?'Usuário ou senha inválidos.':'Não foi possível entrar agora. Confira sua conexão e tente novamente.');
+      }
+      const s2=await sb.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
+      if(s2.error||!s2.data?.user)return msg('Não foi possível entrar agora. Tente novamente.');
+      if(window.avancarCarrossel)window.avancarCarrossel();
+      return entrar(s2.data.user);
+    }finally{lb.disabled=false}
+  }
   const r=await sb.auth.signInWithPassword(cred());
   if(r.error){
     const t=r.error.message||'';
@@ -1852,14 +1869,14 @@ $('#lg').addEventListener('submit',async e=>{
 });
 $('#lg-new').addEventListener('click',async()=>{
   if(!sb)return;const c=cred();
-  if(!c.email||c.password.length<8)return msg('Informe um e-mail e uma senha com pelo menos 8 caracteres.');
+  if(!c.email||!MFUsuario.ehEmail(c.email)||c.password.length<8)return msg('Para criar a conta, informe um e-mail e uma senha com pelo menos 8 caracteres. O nome de usuário é criado depois, já dentro do sistema.');
   const r=await sb.auth.signUp(c);
   if(r.error)return msg(/not allowed/i.test(r.error.message)?'O cadastro aberto está desativado. Peça um convite ao administrador do sistema.':'Não foi possível criar a conta agora. Confira os dados e tente novamente.');
   if(r.data.session)entrar(r.data.user);else msg('Conta criada. Confirme o e-mail que enviamos e depois clique em Entrar.');
 });
 $('#lg-fg').addEventListener('click',async()=>{
   if(!sb)return;const em=$('#lg-em').value.trim();
-  if(!em)return msg('Digite seu e-mail acima.');
+  if(!em||!MFUsuario.ehEmail(em))return msg('Para recuperar a senha, digite seu e-mail acima (não o nome de usuário).');
   const r=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});
   if(r.error)return msg(r.error.status===429?'Muitas tentativas de envio. Aguarde alguns minutos e tente de novo.':'Não foi possível enviar o e-mail agora. Confira a conexão e tente novamente.');
   msg('Se esse e-mail tiver conta, enviamos o link para redefinir a senha. Olhe também o spam.');
@@ -1897,4 +1914,40 @@ if(sb)sb.auth.onAuthStateChange((event,session)=>{
   if(AUTH_ERR){msg(/google|autorizad|hook/i.test(AUTH_ERR)?'Acesso Google não autorizado. Solicite liberação ao administrador.':'Este link expirou ou já foi usado. Peça um novo convite ou use "Esqueci minha senha".');history.replaceState(null,'',location.pathname+location.search)}
   const r=await sb.auth.getUser();
   if(r.data.user&&!GOOGLE_LOGIN_PENDING){const u=r.data.user;needPw(u)?defSenha(u):entrar(u)}
+})();
+
+/* ---------- nome de usuário (v12) ---------- */
+(function(){
+  const bt=$('#usr-nome'),dlg=$('#un-dlg');if(!bt||!dlg)return;
+  const um=t=>{$('#un-msg').textContent=t||''};
+  const sair=$('#sair');
+  new MutationObserver(()=>{bt.hidden=sair.hidden}).observe(sair,{attributes:true,attributeFilter:['hidden']});
+  bt.hidden=sair.hidden;
+  async function carregar(){
+    $('#un-atual').textContent='Carregando…';
+    const {data,error}=await sb.from('usuarios_login').select('usuario').maybeSingle();
+    if(error){$('#un-atual').textContent='Não foi possível carregar agora.';return}
+    const atual=data?.usuario||'';
+    $('#un-atual').textContent=atual?'Seu nome de usuário atual: '+atual:'Você ainda não tem nome de usuário.';
+    $('#un-rm').hidden=!atual;
+  }
+  bt.addEventListener('click',()=>{um('');$('#un-in').value='';dlg.showModal();carregar()});
+  $('#un-x').addEventListener('click',()=>dlg.close());
+  $('#un-f').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const u=MFUsuario.normalizar($('#un-in').value),err=MFUsuario.validar(u);
+    if(err)return um(err);
+    const ok=$('#un-ok');ok.disabled=true;
+    try{
+      const {data,error}=await sb.rpc('definir_meu_usuario',{p_usuario:u});
+      if(error){const t=(error.message||'')+' '+(error.code||'');return um(/ja_existe|23505/.test(t)?'Este nome já está em uso. Escolha outro.':/invalido/.test(t)?'Nome inválido.':'Não foi possível salvar agora.')}
+      $('#un-in').value='';um('Pronto! Agora você pode entrar com "'+data+'" e sua senha.');carregar();
+    }finally{ok.disabled=false}
+  });
+  $('#un-rm').addEventListener('click',async()=>{
+    if(!confirm('Remover seu nome de usuário? Você continuará entrando pelo e-mail.'))return;
+    const {error}=await sb.rpc('remover_meu_usuario');
+    if(error)return um('Não foi possível remover agora.');
+    um('Nome de usuário removido.');carregar();
+  });
 })();
